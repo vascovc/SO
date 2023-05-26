@@ -1,0 +1,104 @@
+#!/bin/bash
+function read_second_values(){
+	sleep $TIME
+	readarray -t TX_SECOND < <( ifconfig | awk '/TX packets/ {print$5}')
+	readarray -t RX_SECOND < <( ifconfig | awk '/RX packets/ {print$5}') 
+	for ((i=0;i<${#NAMES[@]};i++)) ; do
+		TX_DIF[i]=$(( ${TX_SECOND[i]} - ${TX[i]} ))
+		TRATE[i]=$((${TX_DIF[i]} / $TIME ))
+		RX_DIF[i]=$(( (${RX_SECOND[i]} - ${RX[i]}) ))
+		RRATE[i]=$((${RX_DIF[i]} / $TIME ))
+		if [[ $is_loop == 0 ]]  ; then
+			TX_FIRST[i]=${TX[i]}
+			RX_FIRST[i]=${RX[i]}
+		fi
+		TX[i]=${TX_SECOND[i]}
+		RX[i]=${RX_SECOND[i]}
+	done
+}
+
+function second_part(){
+read_second_values
+while getopts ":c:bkmp:trTRvl" options; do
+	case "${options}" in
+		c) # expressao regular
+			pattern=$OPTARG
+			;;
+                b) # bytes - nao se faz nada
+                       ;;
+		k) # kilobytes
+			num_to_divide=$((1024))
+			;;
+		m) # megabytes
+			num_to_divide=$((1024*1024))
+			;;
+		p) #numero de interfaces a ver
+			number_interfaces=$OPTARG
+			is_number='^[0-9]+$'
+			if ! [[ $number_interfaces =~ $is_number ]] ; then
+			   echo "-p only accepts a number"
+			   exit $ERRCODE
+			fi
+			;;
+		t) # sort por TX
+			sort_way="-k2 "
+			;;
+		r) # sort por RX
+			sort_way="-k3 "
+			;;
+		T) # sort por TRATE
+			sort_way="-k4 "
+			;; 
+		R) # sort por RTRATE
+			sort_way="-k5 "
+			;;
+		v) # Faz reverse
+			sort_way_rev=1
+			;;
+		l) # Fazer o loop
+			is_loop=1
+			;;
+		*)
+			echo "Parametro nao permitido"
+			exit $ERRCODE
+			;;
+	esac
+done
+if [[ $sort_way_rev == 1 ]] ; then
+	sort_way="$sort_way""-r "
+fi
+
+if [[ $is_loop == 0 ]]  ; then
+	printf "%-8s %8s %8s %8s %8s\n" "NETIF" "TX" "RX" "TRATE" "RRATE"
+	for ((i=0;i<${#NAMES[@]};i++)) ; do
+		printf "%-8s %8d %8d %8.1f %8.1f\n" ${NAMES[i]} $((${TX_DIF[i]}/num_to_divide)) $((${RX_DIF[i]}/num_to_divide)) $((${TRATE[i]}/num_to_divide)) $((${RRATE[i]}/num_to_divide))
+	done | sort $sort_way | grep -i $pattern | head -n $number_interfaces
+	#primeiro faz-se o sort depois faz-se a parte de fazer parte do nome e depois o 	numero de interfaces
+
+else
+
+	printf "%-8s %8s %8s %8s %8s %8s %8s\n" "NETIF" "TX" "RX" "TRATE" "RRATE" "TXTOT" "RXTOT"
+	while true;do
+		for ((i=0;i<${#TX[@]};i++)) ; do
+			printf "%-8s %8d %8d %8.1f %8.1f %8d %8d\n" ${NAMES[i]} $((${TX_DIF[i]}/num_to_divide)) $((${RX_DIF[i]}/num_to_divide)) $((${TRATE[i]}/num_to_divide)) $((${RRATE[i]}/num_to_divide)) $(( (${TX_SECOND[i]}-${TX_FIRST[i]}) / num_to_divide )) $(( (${RX_SECOND[i]}-${RX_FIRST[i]}) / num_to_divide ))
+		done | sort $sort_way |grep -i $pattern | head -n $number_interfaces
+		printf "\n"
+		read_second_values
+	done
+fi
+}
+################################################
+#MAIN
+################################################
+readarray -t NAMES < <( ifconfig |awk '/flags/ {print$1}'|sed 's/://' )
+readarray -t TX < <( ifconfig |awk '/TX packets/ {print$5}')
+readarray -t RX < <( ifconfig|awk '/RX packets/ {print$5}')
+
+TIME="${@: -1}" # isto é por o tempo ser sempre o ultimo parametro a se passar
+pattern="." # isto é para simbolizar que sao todos, assim conseguimos usar bem o pattern sem problemas
+number_interfaces=${#NAMES[@]} # todo o numero de interfaces
+num_to_divide=1 # para a conversao em outras unidades, este e o default
+sort_way="-k1 " #por predefiniçao e ordem alfabetica
+sort_way_rev=0
+is_loop=0 #isto serve para correr o loop sem problemas de dar print a duas tabelas.
+second_part "$@" #chamar a funcao em cima

@@ -1,0 +1,11 @@
+shmget - create
+	- connect
+
+shmctl - shmem destroy
+
+shmat - shmem attadi
+
+shmdt - shmem dettach
+
+
+

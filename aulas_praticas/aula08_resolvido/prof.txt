@@ -1,0 +1,36 @@
+/* Guião
+1b)
+i) São impressas 5 linhas; desprezando as linhas 'Quem sou eu?' são 3 Linhas:
+i) 0 processo 'pai imprime a primeira e a 3a (última);
+	Antes do fork: PID = própriol, PPID = pail
+	Após o fork: PID = próprio2, PPID = pai2
+	O processo 'filho' imprime a segunda
+	Após o fork: PID = próprio3, PPID = pai3
+	Poderemos verificar que própriol=próprio3=pai2 e pail=pa13
+	
+iii) pai (print) - fork - pai (sleep, print)
+									filho (print)
+1c) 0 processo-pai do programa é a bash (como podemos comprovar fazendo 'ps')
+
+2a) fork2.c é essencialmente igual a forkl.c. Mostra explicitamente o valor de retorno de fork"
+usado em forkl.c da mesma forma (apenas não era explicitamente mostrado). Está incluída a b.
+
+2b) Podem distinguir tendo em conta o valor de retorno do 'fork'. No processo-pai, 'fork' retorna
+no processo-filho, fork retorna o valor 0.
+O código apresentado usa a variável 'ret' para registar o valor de retorno de 'fork'. É o vali
+determina se o processo entra em pausa ('sleep(1)'); consegue-se assim que (neste caso) apena:
+em pausa.
+
+
+3a) 'execl' faz com que o processo substitua o programa que está a executar por um novo ('path' e nome de ficheiro do programa a executar são os dois primeiros argumentos de execl'). Consegue-se passar a esse programa um número variável de parâmetros (30 argumento e seguintes de 'execl') discriminando o último: forçosamente NULL.
+https://www.dca.ufrn.br/-adelardo/cursos/DCA409/node39.htmlma
+
+3b)
+i) Adaptado do manual de 'execl':
+"The initial argument for these functions (família 'execl') is the mame of a file that is to be executed.'
+"The const char •arg and subsequent ellipses can be thought of as argo, argl,argn. Together they describe a list of pointers to null-terminated strings that represent the argument list available to the executed program.
+The first argument (1.e. segundo de 'execl*) by convention, should point to its f1lename.
+
+ii)
+O comando de 'shell' equivalente é
+'./child

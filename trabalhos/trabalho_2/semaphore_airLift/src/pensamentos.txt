@@ -1,0 +1,165 @@
+-> Se estiver um 'x' antes é porque ainda não está feito ou sem certezas que faça sentido ser dessa forma
+
+-> Se for '><' antes é por ainda nao estar implementado
+Semáforos o que me faz sentido:
+
+-> limpeza
+	ipcs -> mostra o que há, essencial porque os numeros variam
+	ipcs -s 13 -> para limpar os semaforos
+	ipcs -m 32811 -> a memoria partilhada
+
+saves:
+	-saveStartBoarding
+		tem que ser o piloto
+	-saveFlightDeparted
+		host
+	-saveFlightArrived
+		tem que ser o piloto
+	-saveFlightReturning
+		tem que ser o piloto
+	-savePassengerChecked
+		host
+		
+
+semáforos:
+	-passengersInQueue
+	hostess esperar os passageiros
+		up	- passageiro
+		down	- hostess
+
+	-passengersWaitInQueue
+	passageiros esperarem a hostess
+		up	- hostess
+		down	- passageiro
+
+	-passengersWaitInFlight
+	passageiros esperarem o fim do voo
+		up	- o piloto para deixar os passageiros sairem
+		down	- >< os passageiros para esperarem que o voo termine
+
+	-readyForBoarding
+	hostess para começar o boarding
+		up	- piloto é que deixa entrar
+		down	- a hostess tem que esperar
+
+	-readyToFlight
+	piloto esperar o fim do boarding
+		up	- >< a hostess quando tiver acabado
+		down	- piloto para esperar para entrarem
+
+	-idShown
+	hostess esperar que os passageiros mostrem o id
+		up	- passageiro
+		down	- hostess
+
+	-planeEmpty
+	piloto esperar que os passageiros saiam
+		up	- ><o passageiro
+		down	- o piloto para esperar que os passageiros saiam
+		-duvida se tera que ser um ciclo ou se apenas o ultimo passageiro o tera que fazer
+
+Pseudo-Código:
+
+Passageiro:
+	-waitInQueue
+		RC{
+			-chega à fila, altera o seu estado para IN_QUEUE
+			-aumenta o numero de pessoas que la estao
+			-faz save
+		}		
+		fora{
+			-faz up ao semaforo para dizer que ha alguem na fila
+			-faz down ao semaforo para esperar pela hostess 
+		}		
+		RC{
+			x-guardar o estado, mas qual
+		}		
+		fora{
+			x-
+		}	
+	-waitUntilDestination
+		fora{
+			-faz up ao semaforo 
+		}
+		RC{
+			-
+		}
+
+
+Piloto:
+	-flight
+		RC{
+			-consoante for a ir ou a vir muda o estado do piloto
+			>< o save qual deve ser?
+		}
+	-signalReadyForBoarding
+		RC{
+			-muda o estado para a espera para embarque
+			-aumenta o numero do voo
+			>< o save qual deve ser?
+		}
+		fora{
+			-faz up ao semaforo da hostess para ela deixar embarcar
+		}
+	-waitUntilReadyToFlight
+		RC{
+			-muda o estado para waiting for boarding
+			-guarda o estado
+		}
+		fora{
+			-faz se up ao semaforo para os passageiros entrarem
+		}
+	-dropPassengersAtTarget
+		RC{
+			-muda o seu estado para a deixar passageiros
+			>< o save qual deve ser?
+		}
+		fora{
+			-faz up ao semaforo dos passageiros, para poderem sair do aviao
+			-faz down ao semaforo de aviao vazio
+		}
+		RC{
+			>< o save qual deve ser?
+		}
+
+Hostess:
+	-waitForNextFlight
+		RC{
+			-atualiza o seu estado para wait for flight
+			-faz save, faz sentido ser este
+		}
+		fora{
+			-faz down ao semaforo para esperar para fazer boarding
+		}
+	-waitForPassenger
+		RC{
+			-passa a ficar a espera
+			-guarda o estado
+		}
+		fora{
+			-faz down ao semaforo para aguardar a chegada de um passageiro
+		}
+	-checkPassport
+		fora{
+			-fazer down ao semaforo para esperar que o passageiro mostre o id
+		}
+		RC{
+		}
+		fora{
+		}
+		RC{
+			-verificar se o ultimo passageiro ja esta
+		}
+		fora{
+		}
+	-signalReadyToFlight
+		RC{
+			-atualiza o seu estado para ready_to_flight
+			-regista o numero de passageiros no video
+			x-verificar o numero de passageiros
+			x-faz save do seu estado nao sei qual
+		}
+		fora{
+			-fazer up ao ready to flight que assim o piloto pode continuar para voar
+		}
+
